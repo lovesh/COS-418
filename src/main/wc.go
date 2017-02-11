@@ -10,16 +10,22 @@ import (
 	"unicode"
 )
 
+
+func GetWords(text string) []string {
+	f := func(c rune) bool {
+		return !unicode.IsLetter(c) && !unicode.IsNumber(c)
+	}
+	return strings.FieldsFunc(text, f)
+}
+
+
 // The mapping function is called once for each piece of the input.
 // In this framework, the key is the name of the file that is being processed,
 // and the value is the file's contents. The return value should be a slice of
 // key/value pairs, each represented by a mapreduce.KeyValue.
 func mapF(document string, value string) (res []mapreduce.KeyValue) {
 	// TODO: you have to write this function
-	f := func(c rune) bool {
-		return !unicode.IsLetter(c) && !unicode.IsNumber(c)
-	}
-	words := strings.FieldsFunc(value, f)
+	words := GetWords(value)
 	freq := make(map[string] int)
 	for _, word := range words {
 		count, ok := freq[word]

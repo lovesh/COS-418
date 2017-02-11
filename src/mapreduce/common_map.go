@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"fmt"
 	"encoding/json"
+	"sync"
 )
 
 // doMap does the job of a map worker: it reads one of the input files
@@ -12,6 +13,7 @@ import (
 // contents, and partitions the output into nReduce intermediate files.
 
 var hashes = make(map[string]int)
+var lock = sync.RWMutex{}
 
 func doMap(
 	jobName string, // the name of the MapReduce job
@@ -57,10 +59,14 @@ func doMap(
 
 		for i := range kvs {
 			k := kvs[i].Key
+			lock.RLock()
 			r, ok := hashes[k]
+			lock.RUnlock()
 			if !ok {
 				r = int(ihash(k)) % nReduce
+				lock.Lock()
 				hashes[k] = r
+				lock.Unlock()
 			}
 			partitions[r] = append(partitions[r], kvs[i])
 
@@ -68,7 +74,9 @@ func doMap(
 
 		for i := range partitions {
 			j, _ := json.Marshal(partitions[i])
-			ioutil.WriteFile(reduceName(jobName, mapTaskNumber, i), []byte(j), 0644)
+			f := reduceName(jobName, mapTaskNumber, i)
+			debug("MapF writing %s\n", f)
+			ioutil.WriteFile(f, []byte(j), 0644)
 		}
 	}
 }

@@ -12,7 +12,7 @@ import (
 // merge combines the results of the many reduce jobs into a single output file
 // XXX use merge sort
 func (mr *Master) merge() {
-	debug("Merge phase")
+	debug("Merge phase\n")
 	kvs := make(map[string]string)
 	for i := 0; i < mr.nReduce; i++ {
 		p := mergeName(mr.jobName, i)

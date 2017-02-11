@@ -1,10 +1,11 @@
-package mapreduce
+	package mapreduce
 
 import (
 	"io/ioutil"
 	"fmt"
 	"encoding/json"
 	"os"
+	"sort"
 )
 
 // doReduce does the job of a reduce worker: it reads the intermediate
@@ -65,9 +66,16 @@ func doReduce(
 	if err != nil {
 		fmt.Println("Cannot open file ", mergeFileName)
 	}
+	var keys []string
+	for k := range kvs {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
 	enc := json.NewEncoder(file)
-	for key, val := range kvs {
-		enc.Encode(KeyValue{key, reduceF(key, val)})
+	for _, key := range keys {
+		enc.Encode(KeyValue{key, reduceF(key, kvs[key])})
 	}
 	file.Close()
+	debug("reduceF wrote %s\n", mergeFileName)
 }
